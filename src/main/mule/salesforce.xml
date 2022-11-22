@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a2c2d6bf-d437-4ea2-a7fc-dbe6471ad6b0" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="ec823cf4-de76-4f9f-ad90-e20ce7626a39" >
+		<salesforce:basic-connection username="${SF.username}" password="${secure::SF.password}" securityToken="${SF.securitytoken}" />
+	</salesforce:sfdc-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="2efc0cb6-b89e-47a2-a2fe-b0f5234cf3ec" file="Salesforce-PROD.properties" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="3c66c9cd-d996-4542-a699-b6fae3bc5ec6" file="Salesforce-PROD.properties" key="abcdefghijklmnop " >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<flow name="salesforceFlow" doc:id="ab254bab-3e93-49b3-bc9a-ecbd408ee097" >
+		<http:listener doc:name="Listener" doc:id="600985b1-fef7-4eff-9e82-201254be99ea" config-ref="HTTP_Listener_config" path="/SalesForce"/>
+		<ee:transform doc:name="Transform Message" doc:id="0a44503f-225b-4718-9b7c-d07f5f834458">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	Name: payload01.Name,
+	BillingStreet: payload01."Billing Street",
+	BillingCity: payload01."Billing City",
+	BillingState: payload01."Billing State",
+	BillingPostalCode: payload01.BillingPostalCode,
+	BillingCountry: payload01."Billing Country"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create type="Account" doc:id="9ad223a8-5377-409b-a629-e859d148a973" config-ref="Salesforce_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="cf409daf-4622-49a6-9ade-fbc4bd34e0a9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message:"Account created successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

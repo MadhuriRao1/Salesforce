@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="localfile" format="csv">
+      <types:shape format="weave" example="examples/accounts.csv"><![CDATA[%dw 2.0
+
+type localfile = Array<{|  "Billing Street": String,   "Billing City": String,   "Billing Country": String,   "Billing State": String,   Name: String,   BillingPostalCode: String|}> {"isQuotedString": "false",
+"header": "true",
+"headerLineNumber": "0"}
+
+]]></types:shape>
+      <types:properties>
+        <types:property name="headerLineNumber" value="0"/>
+        <types:property name="header" value="true"/>
+        <types:property name="isQuotedString" value="false"/>
+      </types:properties>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#0a44503f-225b-4718-9b7c-d07f5f834458">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="localfile"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>
